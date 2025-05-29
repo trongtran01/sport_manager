@@ -52,7 +52,8 @@
 
 | Trang chính | Trang chi tiết sân |
 |-------------|---------------------|
-| ![index.png](https://tinyurl.com/2yldkrtw) | ![field_detail.png](https://tinyurl.com/29v359mx) |
+| ![index.png](![image](https://github.com/user-attachments/assets/8c5ec3e6-8847-469a-9d18-1b23f2cf6a29)
+) | ![field_detail.png](https://www.awesomescreenshot.com/video/40399402) |
 
 ---
 
