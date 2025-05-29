@@ -1,12 +1,11 @@
 <?php
 $host = 'localhost';
-$db   = 'sport_manager';
+$db = 'sport_manager';
 $user = 'root';
-$pass = ''; // Đổi nếu bạn có mật khẩu
+$pass = '';
+$conn = new mysqli($host, $user, $pass, $db);
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Lỗi kết nối DB: " . $e->getMessage());
+if ($conn->connect_error) {
+    die("Kết nối thất bại: " . $conn->connect_error);
 }
+?>

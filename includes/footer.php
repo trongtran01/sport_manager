@@ -1,9 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<body>
-        <footer>
-        <p>&copy; 2025 Sport Manager. All rights reserved.</p>
-    </footer>
-    <script src="js/script.js"></script>
+<footer>
+    <p>© 2025 Zone 9 Sport Manager</p>
+</footer>
 </body>
 </html>
