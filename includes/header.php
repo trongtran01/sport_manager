@@ -10,7 +10,7 @@
 <header>
     <div class="logo">
         <a href="/Sport_Manager/">
-            <img src="asset/img/logo.png" alt="Zone 9">
+            <img src="/Sport_Manager/asset/img/logo.png" alt="Logo">
         </a>
     </div>
     <h1>Hệ thống quản lý sân Zone 9</h1>

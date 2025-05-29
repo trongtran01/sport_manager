@@ -58,111 +58,17 @@ function generate_time_slots($start = '06:00', $end = '22:00') {
     return $slots;
 }
 $time_slots = generate_time_slots();
+
+// Include CSS file
+echo '<link rel="stylesheet" href="../css/style.css">';
 ?>
 
-<style>
-.container { max-width: 800px; margin: 30px auto; font-family: Arial, sans-serif; }
-h2, h3 { color: #333; }
-.time-slots { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-.time-slots label {
-    border: 1px solid #888;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.3s;
-    min-width: 140px;
-    display: flex; justify-content: space-between; align-items: center;
-}
-.time-slots label.booked {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-    cursor: pointer;
-    color: #721c24;
-    position: relative;
-}
-.time-slots label.booked:hover {
-    background-color: #f5c6cb;
-}
-.time-slots input[type=checkbox] { margin-right: 8px; }
-.time-slots label.booked input[type=checkbox] { display: none; }
-
-/* Modal */
-.modal-bg {
-    display: none; 
-    position: fixed; 
-    top:0; left:0; right:0; bottom:0; 
-    background: rgba(0,0,0,0.5); 
-    z-index: 9999;
-    justify-content: center; 
-    align-items: center;
-}
-.modal {
-    background: #fff;
-    padding: 20px 25px;
-    border-radius: 8px;
-    max-width: 400px;
-    width: 100%;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-.modal h3 { margin-top: 0; }
-.modal label { display: block; margin-top: 10px; }
-.modal input[type=text], .modal input[type=tel] {
-    width: 100%; padding: 8px;
-    box-sizing: border-box;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-.modal .btn-group {
-    margin-top: 20px;
-    text-align: right;
-}
-.modal .btn {
-    padding: 8px 15px;
-    background-color: #007bff;
-    border: none;
-    border-radius: 4px;
-    color: white;
-    cursor: pointer;
-    margin-left: 10px;
-}
-.modal .btn.cancel {
-    background-color: #6c757d;
-}
-
-/* Tooltip cho khung giờ đã đặt */
-.tooltip {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-    color: #721c24;
-}
-.tooltip .tooltiptext {
-    visibility: hidden;
-    width: 220px;
-    background-color: #f8d7da;
-    color: #721c24;
-    text-align: left;
-    border-radius: 6px;
-    padding: 10px;
-    position: absolute;
-    z-index: 10;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-    opacity: 1;
-}
-</style>
-
 <div class="container">
-    <h2>Thông tin sân: <?= htmlspecialchars($field['name']) ?></h2>
-    <p>Loại sân: <strong><?= htmlspecialchars($field['type']) ?></strong></p>
+    <div class="field-info">
+        <h2>Thông tin sân: <?= htmlspecialchars($field['name']) ?></h2>
+        <p>Loại sân: <strong><?= htmlspecialchars($field['type']) ?></strong></p>
+        <p>Ngày đặt: <strong><?= date('d/m/Y', strtotime($today)) ?></strong></p>
+    </div>
 
     <form id="booking-form">
         <input type="hidden" name="field_id" value="<?= $field_id ?>">
@@ -212,93 +118,14 @@ h2, h3 { color: #333; }
 </div>
 
 <script>
-// Lưu các checkbox đang chọn để show modal
-let selectedSlots = [];
-const bookingModal = document.getElementById('booking-modal');
-const modalForm = document.getElementById('modal-form');
-const customerNameInput = document.getElementById('customer_name');
-const customerPhoneInput = document.getElementById('customer_phone');
-const bookingForm = document.getElementById('booking-form');
-
-bookingForm.addEventListener('submit', function(e){
-    e.preventDefault();
-
-    // Lấy tất cả checkbox đã chọn
-    const checkedBoxes = bookingForm.querySelectorAll('input[name="slots[]"]:checked');
-    if (checkedBoxes.length === 0) {
-        alert('Vui lòng chọn ít nhất 1 khung giờ chưa đặt.');
-        return;
-    }
-
-    // Lưu lại các slot đã chọn để dùng khi submit modal
-    selectedSlots = Array.from(checkedBoxes).map(cb => cb.value);
-
-    // Hiện modal nhập thông tin người đặt
-    customerNameInput.value = '';
-    customerPhoneInput.value = '';
-    bookingModal.style.display = 'flex';
-    customerNameInput.focus();
-});
-
-// Hủy modal
-document.getElementById('modal-cancel').addEventListener('click', () => {
-    bookingModal.style.display = 'none';
-});
-
-// Xử lý submit modal form
-modalForm.addEventListener('submit', function(e){
-    e.preventDefault();
-
-    const name = customerNameInput.value.trim();
-    const phone = customerPhoneInput.value.trim();
-    if (!name || !phone) {
-        alert('Vui lòng nhập đầy đủ họ tên và số điện thoại.');
-        return;
-    }
-
-    // Gửi AJAX lưu booking
-    fetch('save_booking.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            field_id: <?= $field_id ?>,
-            date: '<?= $today ?>',
-            slots: selectedSlots,
-            customer_name: name,
-            customer_phone: phone
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            alert('Đặt sân thành công!');
-            bookingModal.style.display = 'none';
-
-            // Cập nhật UI: khóa các slot đã đặt
-            selectedSlots.forEach(slot => {
-                // Tìm label checkbox tương ứng và chuyển sang booked
-                const label = Array.from(document.querySelectorAll('.time-slots label'))
-                    .find(lbl => lbl.textContent.trim().startsWith(slot));
-                if (label) {
-                    label.classList.add('booked');
-                    label.innerHTML = `
-                        <span>${slot}</span>
-                        <span class="tooltiptext">
-                            Người đặt: ${name}<br>
-                            SĐT: ${phone}
-                        </span>
-                    `;
-                }
-            });
-
-            // Bỏ chọn checkbox cũ
-            bookingForm.querySelectorAll('input[name="slots[]"]:checked').forEach(cb => cb.checked = false);
-        } else {
-            alert('Đặt sân thất bại: ' + (data.message || 'Lỗi hệ thống'));
-        }
-    })
-    .catch(() => alert('Có lỗi xảy ra. Vui lòng thử lại sau.'));
-});
+// Config cho BookingModal
+const BOOKING_CONFIG = {
+    fieldId: <?= $field_id ?>,
+    today: '<?= $today ?>'
+};
 </script>
+
+<!-- Include JavaScript file -->
+<script src="../js/booking-modal.js"></script>
 
 <?php include '../includes/footer.php'; ?>
