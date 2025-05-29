@@ -48,15 +48,6 @@
 
 ---
 
-## 📸 Giao Diện Demo
-
-| Trang chính | Trang chi tiết sân |
-|-------------|---------------------|
-| (https://github.com/user-attachments/assets/8c5ec3e6-8847-469a-9d18-1b23f2cf6a29)
-) |(https://github.com/user-attachments/assets/2b3ee1c9-8886-484c-ab01-e97c5a4811a4)
-) |
-
----
 
 ## 🧑‍💻 Công Nghệ Sử Dụng
 
