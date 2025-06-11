@@ -180,28 +180,31 @@ class BookingModal {
         const bookingId = button.getAttribute('data-booking-id');
         const slot = button.getAttribute('data-slot');
         
-        // Tìm thông tin booking từ DOM
-        const bookingContainer = button.closest('.booked-slot-container');
-        const tooltiptext = bookingContainer.querySelector('.tooltiptext');
+        // Thử lấy thông tin từ data attributes trước
+        let customerName = button.getAttribute('data-name') || '';
+        let customerPhone = button.getAttribute('data-phone') || '';
         
-        let customerName = '';
-        let customerPhone = '';
-        
-        if (tooltiptext) {
-            const tooltipContent = tooltiptext.innerHTML;
-            const nameMatch = tooltipContent.match(/Người đặt:\s*([^<]*)/);
-            const phoneMatch = tooltipContent.match(/SĐT:\s*([^<]*)/);
+        // Nếu không có trong data attributes, tìm từ DOM
+        if (!customerName || !customerPhone) {
+            const bookingContainer = button.closest('.booked-slot-container');
+            const tooltiptext = bookingContainer ? bookingContainer.querySelector('.tooltiptext') : null;
             
-            customerName = nameMatch ? nameMatch[1].trim() : '';
-            customerPhone = phoneMatch ? phoneMatch[1].trim() : '';
+            if (tooltiptext) {
+                const tooltipContent = tooltiptext.innerHTML;
+                const nameMatch = tooltipContent.match(/Người đặt:\s*([^<]*)/);
+                const phoneMatch = tooltipContent.match(/SĐT:\s*([^<]*)/);
+                
+                customerName = nameMatch ? nameMatch[1].trim() : customerName;
+                customerPhone = phoneMatch ? phoneMatch[1].trim() : customerPhone;
+            }
         }
         
         this.cancelingBookingId = bookingId;
         
         // Cập nhật thông tin trong cancel modal
-        this.cancelSlotSpan.textContent = slot;
-        this.cancelCustomerName.textContent = customerName;
-        this.cancelCustomerPhone.textContent = customerPhone;
+        this.cancelSlotSpan.textContent = slot || 'N/A';
+        this.cancelCustomerName.textContent = customerName || 'N/A';
+        this.cancelCustomerPhone.textContent = customerPhone || 'N/A';
         
         // Hiển thị cancel modal
         this.showCancelModal();
@@ -583,13 +586,18 @@ class BookingModal {
      */
     updateUIAfterUpdate(customerData) {
         const editButton = document.querySelector(`[data-booking-id="${this.editingBookingId}"].btn-edit`);
-        if (editButton) {
-            // Cập nhật data attributes
-            editButton.setAttribute('data-name', customerData.name);
-            editButton.setAttribute('data-phone', customerData.phone);
-            
-            // Cập nhật tooltiptext
-            const bookingContainer = editButton.closest('.booked-slot-container');
+        if (!editButton) {
+            console.warn('Không tìm thấy edit button để cập nhật UI');
+            return;
+        }
+        
+        // Cập nhật data attributes
+        editButton.setAttribute('data-name', customerData.name);
+        editButton.setAttribute('data-phone', customerData.phone);
+        
+        // Cập nhật tooltiptext
+        const bookingContainer = editButton.closest('.booked-slot-container');
+        if (bookingContainer) {
             const tooltiptext = bookingContainer.querySelector('.tooltiptext');
             if (tooltiptext) {
                 tooltiptext.innerHTML = `
@@ -621,9 +629,9 @@ class BookingModal {
     /**
      * Đánh dấu slot đã được đặt
      */
-    markSlotAsBooked(label, slot, customerData) {
-        // Tạo một booking ID tạm (trong thực tế sẽ lấy từ response)
-        const tempBookingId = Date.now();
+    markSlotAsBooked(label, slot, customerData, bookingId = null) {
+        // Sử dụng booking ID thật từ response thay vì tạo ID tạm
+        const actualBookingId = bookingId || Date.now(); // Fallback nếu không có ID
         
         label.outerHTML = `
             <div class="booked-slot-container">
@@ -636,15 +644,17 @@ class BookingModal {
                 </label>
                 <div class="slot-actions">
                     <button type="button" class="btn-small btn-edit" 
-                            data-booking-id="${tempBookingId}"
+                            data-booking-id="${actualBookingId}"
                             data-slot="${this.escapeHtml(slot)}"
                             data-name="${this.escapeHtml(customerData.name)}"
                             data-phone="${this.escapeHtml(customerData.phone)}">
                         Sửa
                     </button>
                     <button type="button" class="btn-small btn-delete" 
-                            data-booking-id="${tempBookingId}"
-                            data-slot="${this.escapeHtml(slot)}">
+                            data-booking-id="${actualBookingId}"
+                            data-slot="${this.escapeHtml(slot)}"
+                            data-name="${this.escapeHtml(customerData.name)}"
+                            data-phone="${this.escapeHtml(customerData.phone)}">
                         Hủy
                     </button>
                 </div>

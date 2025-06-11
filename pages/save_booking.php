@@ -144,8 +144,15 @@ function handleCreateBooking($conn, $data) {
  * Xử lý cập nhật booking
  */
 function handleUpdateBooking($conn, $data) {
-    if (!isset($data['booking_id']) || !is_numeric($data['booking_id'])) {
+    // Validate booking_id
+    if (!isset($data['booking_id']) || !is_numeric($data['booking_id']) || $data['booking_id'] <= 0) {
         echo json_encode(['success' => false, 'message' => 'ID booking không hợp lệ']);
+        exit;
+    }
+    
+    // Validate và clean dữ liệu
+    if (!isset($data['customer_name']) || !isset($data['customer_phone'])) {
+        echo json_encode(['success' => false, 'message' => 'Thiếu thông tin khách hàng']);
         exit;
     }
     
@@ -155,49 +162,94 @@ function handleUpdateBooking($conn, $data) {
     
     // Validate dữ liệu khách hàng
     if (empty($customer_name) || strlen($customer_name) < 2) {
-        echo json_encode(['success' => false, 'message' => 'Họ tên không hợp lệ']);
+        echo json_encode(['success' => false, 'message' => 'Họ tên không hợp lệ (tối thiểu 2 ký tự)']);
+        exit;
+    }
+    
+    if (strlen($customer_name) > 100) {
+        echo json_encode(['success' => false, 'message' => 'Họ tên quá dài (tối đa 100 ký tự)']);
         exit;
     }
     
     if (empty($customer_phone) || !preg_match('/^[0-9]{9,15}$/', $customer_phone)) {
-        echo json_encode(['success' => false, 'message' => 'Số điện thoại không hợp lệ']);
+        echo json_encode(['success' => false, 'message' => 'Số điện thoại không hợp lệ (9-15 chữ số)']);
         exit;
     }
     
     try {
-        // Lấy thông tin booking hiện tại
-        $stmt = $conn->prepare("SELECT b.*, f.name as field_name FROM bookings b 
-                               JOIN fields f ON b.field_id = f.id 
-                               WHERE b.id = ?");
-        $stmt->bind_param("i", $booking_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        // Bắt đầu transaction
+        $conn->begin_transaction();
+        
+        // Kiểm tra booking có tồn tại không
+        $check_stmt = $conn->prepare("SELECT b.*, f.name as field_name FROM bookings b 
+                                     JOIN fields f ON b.field_id = f.id 
+                                     WHERE b.id = ? FOR UPDATE");
+        $check_stmt->bind_param("i", $booking_id);
+        $check_stmt->execute();
+        $result = $check_stmt->get_result();
         
         if ($result->num_rows === 0) {
-            throw new Exception('Booking không tồn tại');
+            throw new Exception('Booking không tồn tại hoặc đã bị xóa');
         }
         
         $booking = $result->fetch_assoc();
         
+        // Lưu thông tin cũ để log
+        $old_name = $booking['customer_name'];
+        $old_phone = $booking['customer_phone'];
+        
         // Cập nhật thông tin booking
-        $update_stmt = $conn->prepare("UPDATE bookings SET customer_name = ?, customer_phone = ?, updated_at = NOW() WHERE id = ?");
+        $update_stmt = $conn->prepare("UPDATE bookings SET 
+                                      customer_name = ?, 
+                                      customer_phone = ?, 
+                                      updated_at = NOW() 
+                                      WHERE id = ?");
         $update_stmt->bind_param("ssi", $customer_name, $customer_phone, $booking_id);
         
         if (!$update_stmt->execute()) {
             throw new Exception('Lỗi khi cập nhật booking: ' . $update_stmt->error);
         }
         
+        // Kiểm tra có bản ghi nào được cập nhật không
+        if ($update_stmt->affected_rows === 0) {
+            throw new Exception('Không có thay đổi nào được thực hiện');
+        }
+        
+        // Commit transaction
+        $conn->commit();
+        
         // Log cập nhật
         $slot = date("H:i", strtotime($booking['start_time'])) . " - " . date("H:i", strtotime($booking['end_time']));
-        logBookingActivity('UPDATE', $booking['field_name'], $customer_name, $customer_phone, [$slot], $booking['date'], $booking_id);
+        $log_message = sprintf(
+            "[BOOKING-UPDATE] ID: %d | Field: %s | Date: %s | Slot: %s | Old: %s (%s) | New: %s (%s)",
+            $booking_id,
+            $booking['field_name'],
+            $booking['date'],
+            $slot,
+            $old_name,
+            $old_phone,
+            $customer_name,
+            $customer_phone
+        );
+        error_log($log_message);
         
         echo json_encode([
             'success' => true,
             'message' => 'Cập nhật booking thành công',
-            'booking_id' => $booking_id
+            'booking_id' => $booking_id,
+            'data' => [
+                'customer_name' => $customer_name,
+                'customer_phone' => $customer_phone,
+                'field_name' => $booking['field_name'],
+                'slot' => $slot,
+                'date' => $booking['date']
+            ]
         ]);
         
     } catch (Exception $e) {
+        // Rollback transaction
+        $conn->rollback();
+        error_log("Update booking error (ID: $booking_id): " . $e->getMessage());
         throw $e;
     }
 }

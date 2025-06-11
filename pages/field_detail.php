@@ -88,13 +88,13 @@ echo '<link rel="stylesheet" href="../css/style.css">';
                             </span>
                         </label>
                         <div class="slot-actions">
-                            <button type="button" class="btn-small btn-edit" 
+                            <!-- <button type="button" class="btn-small btn-edit" 
                                     data-booking-id="<?= $booked_slots[$slot]['id'] ?>"
                                     data-slot="<?= htmlspecialchars($slot) ?>"
                                     data-name="<?= htmlspecialchars($booked_slots[$slot]['customer_name']) ?>"
                                     data-phone="<?= htmlspecialchars($booked_slots[$slot]['customer_phone']) ?>">
                                 Sửa
-                            </button>
+                            </button> -->
                             <button type="button" class="btn-small btn-delete" 
                                     data-booking-id="<?= $booked_slots[$slot]['id'] ?>"
                                     data-slot="<?= htmlspecialchars($slot) ?>">
@@ -140,7 +140,7 @@ echo '<link rel="stylesheet" href="../css/style.css">';
 <div class="modal-bg" id="cancel-modal">
     <div class="modal">
         <h3>Xác nhận hủy đặt sân</h3>
-        <p>Bạn có chắc chắn muốn hủy đặt sân cho khung giờ <strong id="cancel-slot"></strong>?</p>
+        <p>Bạn có chắc chắn muốn hủy đặt sân cho khung giờ <strong id="cancel-slot"></strong> không ?</p>
         <div class="booking-info">
             <p>Khách hàng: <strong id="cancel-customer-name"></strong></p>
             <p>SĐT: <strong id="cancel-customer-phone"></strong></p>
