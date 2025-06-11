@@ -407,3 +407,95 @@ h2, h3 {
         text-transform: uppercase;
     }
 }
+
+/* Add style for logic update and delete */
+.booked-slot-container {
+    position: relative;
+    display: inline-block;
+    margin: 5px;
+}
+
+.slot-actions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+.booked-slot-container:hover .slot-actions {
+    display: block;
+}
+
+.btn-small {
+    padding: 3px 8px;
+    margin: 2px;
+    font-size: 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.btn-edit {
+    background-color: #28c469;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #228f39;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.booking-info {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.alert {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.field-error {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 2px;
+}

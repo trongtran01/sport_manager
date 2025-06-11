@@ -28,7 +28,7 @@ if (!$field) {
 $booked_slots = [];
 $today = date('Y-m-d');
 
-$booked_stmt = $conn->prepare("SELECT start_time, end_time, customer_name, customer_phone FROM bookings WHERE field_id = ? AND date = ?");
+$booked_stmt = $conn->prepare("SELECT id, start_time, end_time, customer_name, customer_phone FROM bookings WHERE field_id = ? AND date = ?");
 if (!$booked_stmt) {
     die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
 }
@@ -39,6 +39,7 @@ $result = $booked_stmt->get_result();
 while ($row = $result->fetch_assoc()) {
     $slot = date("H:i", strtotime($row['start_time'])) . " - " . date("H:i", strtotime($row['end_time']));
     $booked_slots[$slot] = [
+        'id' => $row['id'],
         'customer_name' => $row['customer_name'],
         'customer_phone' => $row['customer_phone'],
     ];
@@ -78,13 +79,29 @@ echo '<link rel="stylesheet" href="../css/style.css">';
         <div class="time-slots">
             <?php foreach ($time_slots as $slot): ?>
                 <?php if (isset($booked_slots[$slot])): ?>
-                    <label class="booked tooltip" data-slot="<?= htmlspecialchars($slot) ?>">
-                        <span><?= htmlspecialchars($slot) ?></span>
-                        <span class="tooltiptext">
-                            Người đặt: <?= htmlspecialchars($booked_slots[$slot]['customer_name']) ?><br>
-                            SĐT: <?= htmlspecialchars($booked_slots[$slot]['customer_phone']) ?>
-                        </span>
-                    </label>
+                    <div class="booked-slot-container">
+                        <label class="booked tooltip" data-slot="<?= htmlspecialchars($slot) ?>">
+                            <span><?= htmlspecialchars($slot) ?></span>
+                            <span class="tooltiptext">
+                                Người đặt: <?= htmlspecialchars($booked_slots[$slot]['customer_name']) ?><br>
+                                SĐT: <?= htmlspecialchars($booked_slots[$slot]['customer_phone']) ?>
+                            </span>
+                        </label>
+                        <div class="slot-actions">
+                            <button type="button" class="btn-small btn-edit" 
+                                    data-booking-id="<?= $booked_slots[$slot]['id'] ?>"
+                                    data-slot="<?= htmlspecialchars($slot) ?>"
+                                    data-name="<?= htmlspecialchars($booked_slots[$slot]['customer_name']) ?>"
+                                    data-phone="<?= htmlspecialchars($booked_slots[$slot]['customer_phone']) ?>">
+                                Sửa
+                            </button>
+                            <button type="button" class="btn-small btn-delete" 
+                                    data-booking-id="<?= $booked_slots[$slot]['id'] ?>"
+                                    data-slot="<?= htmlspecialchars($slot) ?>">
+                                Hủy
+                            </button>
+                        </div>
+                    </div>
                 <?php else: ?>
                     <label>
                         <input type="checkbox" name="slots[]" value="<?= htmlspecialchars($slot) ?>">
@@ -101,8 +118,10 @@ echo '<link rel="stylesheet" href="../css/style.css">';
 <!-- Modal nhập thông tin người đặt -->
 <div class="modal-bg" id="booking-modal">
     <div class="modal">
-        <h3>Thông tin người đặt</h3>
+        <h3 id="modal-title">Thông tin người đặt</h3>
         <form id="modal-form">
+            <input type="hidden" id="booking_id" value="">
+            <input type="hidden" id="is_edit" value="false">
             <label>Họ tên:
                 <input type="text" id="customer_name" required>
             </label>
@@ -111,9 +130,25 @@ echo '<link rel="stylesheet" href="../css/style.css">';
             </label>
             <div class="btn-group">
                 <button type="button" class="btn cancel" id="modal-cancel">Hủy</button>
-                <button type="submit" class="btn">Xác nhận</button>
+                <button type="submit" class="btn" id="modal-submit">Xác nhận</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal xác nhận hủy booking -->
+<div class="modal-bg" id="cancel-modal">
+    <div class="modal">
+        <h3>Xác nhận hủy đặt sân</h3>
+        <p>Bạn có chắc chắn muốn hủy đặt sân cho khung giờ <strong id="cancel-slot"></strong>?</p>
+        <div class="booking-info">
+            <p>Khách hàng: <strong id="cancel-customer-name"></strong></p>
+            <p>SĐT: <strong id="cancel-customer-phone"></strong></p>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn cancel" id="cancel-modal-cancel">Không</button>
+            <button type="button" class="btn btn-danger" id="cancel-modal-confirm">Có, hủy đặt</button>
+        </div>
     </div>
 </div>
 
